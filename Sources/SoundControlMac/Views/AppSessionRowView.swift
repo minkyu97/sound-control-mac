@@ -26,8 +26,10 @@ struct AppSessionRowView: View {
             Button(action: onMuteToggle) {
                 Image(systemName: profile.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                     .font(.system(size: 12, weight: .semibold))
+                    .frame(width: 14, height: 14)
             }
             .buttonStyle(.plain)
+            .frame(width: 20, height: 20)
 
             Text("\(Int((profile.isMuted ? 0 : profile.volume) * 100))%")
                 .font(.system(size: 10, weight: .medium))

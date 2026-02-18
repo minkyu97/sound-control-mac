@@ -5,6 +5,8 @@ struct MenuBarView: View {
     @EnvironmentObject private var appState: AppStateStore
     @Environment(\.openSettings) private var openSettings
 
+    private let deviceLabelWidth: CGFloat = 52
+
     var body: some View {
         VStack(spacing: 12) {
             header
@@ -40,29 +42,45 @@ struct MenuBarView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
 
-            Picker("Output", selection: Binding(
-                get: { appState.defaultOutputUID ?? "" },
-                set: { uid in
-                    guard !uid.isEmpty else { return }
-                    appState.setDefaultOutputDevice(uid: uid)
-                }
-            )) {
-                ForEach(appState.outputDevices) { device in
-                    Text(device.name).tag(device.uid)
-                }
-            }
+            globalDevicePickerRow(
+                title: "Output",
+                selection: Binding(
+                    get: { appState.defaultOutputUID ?? "" },
+                    set: { uid in
+                        guard !uid.isEmpty else { return }
+                        appState.setDefaultOutputDevice(uid: uid)
+                    }
+                ),
+                devices: appState.outputDevices
+            )
 
-            Picker("Input", selection: Binding(
-                get: { appState.defaultInputUID ?? "" },
-                set: { uid in
-                    guard !uid.isEmpty else { return }
-                    appState.setDefaultInputDevice(uid: uid)
-                }
-            )) {
-                ForEach(appState.inputDevices) { device in
+            globalDevicePickerRow(
+                title: "Input",
+                selection: Binding(
+                    get: { appState.defaultInputUID ?? "" },
+                    set: { uid in
+                        guard !uid.isEmpty else { return }
+                        appState.setDefaultInputDevice(uid: uid)
+                    }
+                ),
+                devices: appState.inputDevices
+            )
+        }
+    }
+
+    private func globalDevicePickerRow(title: String, selection: Binding<String>, devices: [AudioDevice]) -> some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .frame(width: deviceLabelWidth, alignment: .leading)
+
+            Picker("", selection: selection) {
+                ForEach(devices) { device in
                     Text(device.name).tag(device.uid)
                 }
             }
+            .labelsHidden()
+            .frame(maxWidth: .infinity)
         }
     }
 
@@ -102,7 +120,7 @@ struct MenuBarView: View {
     private var footerActions: some View {
         HStack {
             Button("Settings") {
-                openSettings()
+                openSettingsWindow()
             }
             .buttonStyle(.borderless)
 
@@ -112,6 +130,25 @@ struct MenuBarView: View {
                 NSApplication.shared.terminate(nil)
             }
             .buttonStyle(.borderless)
+        }
+    }
+
+    private func openSettingsWindow() {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        openSettings()
+
+        // openSettings can occasionally no-op from menu bar context; fall back to AppKit settings actions.
+        DispatchQueue.main.async {
+            let showSettingsSelector = Selector(("showSettingsWindow:"))
+            let showPreferencesSelector = Selector(("showPreferencesWindow:"))
+
+            if NSApplication.shared.target(forAction: showSettingsSelector) != nil {
+                NSApplication.shared.sendAction(showSettingsSelector, to: nil, from: nil)
+            } else if NSApplication.shared.target(forAction: showPreferencesSelector) != nil {
+                NSApplication.shared.sendAction(showPreferencesSelector, to: nil, from: nil)
+            }
+
+            NSApplication.shared.activate(ignoringOtherApps: true)
         }
     }
 }
