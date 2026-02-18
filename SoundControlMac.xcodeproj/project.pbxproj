@@ -1,0 +1,344 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* AppDelegate.swift */; };
+		A10000000000000000000002 /* SoundControlMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* SoundControlMacApp.swift */; };
+		A10000000000000000000003 /* AppAudioProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* AppAudioProfile.swift */; };
+		A10000000000000000000004 /* AppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* AppSession.swift */; };
+		A10000000000000000000005 /* AudioDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* AudioDevice.swift */; };
+		A10000000000000000000006 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* UserSettings.swift */; };
+		A10000000000000000000007 /* AudioDeviceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* AudioDeviceManager.swift */; };
+		A10000000000000000000008 /* CoreAudioTapRoutingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* CoreAudioTapRoutingService.swift */; };
+		A10000000000000000000009 /* RoutingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* RoutingService.swift */; };
+		A1000000000000000000000A /* RoutingServiceFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* RoutingServiceFactory.swift */; };
+		A1000000000000000000000B /* RunningAppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* RunningAppMonitor.swift */; };
+		A1000000000000000000000C /* StubRoutingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* StubRoutingService.swift */; };
+		A1000000000000000000000D /* AppStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000D /* AppStateStore.swift */; };
+		A1000000000000000000000E /* ProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* ProfileStore.swift */; };
+		A1000000000000000000000F /* AppSessionRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000F /* AppSessionRowView.swift */; };
+		A10000000000000000000010 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* MenuBarView.swift */; };
+		A10000000000000000000011 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* SettingsView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* SoundControlMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundControlMacApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* AppAudioProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAudioProfile.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* AppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSession.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* AudioDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevice.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* UserSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettings.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* AudioDeviceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDeviceManager.swift; sourceTree = "<group>"; };
+		A20000000000000000000008 /* CoreAudioTapRoutingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreAudioTapRoutingService.swift; sourceTree = "<group>"; };
+		A20000000000000000000009 /* RoutingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingService.swift; sourceTree = "<group>"; };
+		A2000000000000000000000A /* RoutingServiceFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingServiceFactory.swift; sourceTree = "<group>"; };
+		A2000000000000000000000B /* RunningAppMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningAppMonitor.swift; sourceTree = "<group>"; };
+		A2000000000000000000000C /* StubRoutingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubRoutingService.swift; sourceTree = "<group>"; };
+		A2000000000000000000000D /* AppStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateStore.swift; sourceTree = "<group>"; };
+		A2000000000000000000000E /* ProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStore.swift; sourceTree = "<group>"; };
+		A2000000000000000000000F /* AppSessionRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionRowView.swift; sourceTree = "<group>"; };
+		A20000000000000000000010 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		A20000000000000000000011 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A20000000000000000000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000013 /* SoundControlMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SoundControlMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A40000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A40000000000000000000002 /* Sources */,
+				A40000000000000000000008 /* Support */,
+				A40000000000000000000009 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A40000000000000000000002 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				A40000000000000000000003 /* App */,
+				A40000000000000000000004 /* Models */,
+				A40000000000000000000005 /* Services */,
+				A40000000000000000000006 /* Stores */,
+				A40000000000000000000007 /* Views */,
+			);
+			path = Sources/SoundControlMac;
+			sourceTree = SOURCE_ROOT;
+		};
+		A40000000000000000000003 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* AppDelegate.swift */,
+				A20000000000000000000002 /* SoundControlMacApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000004 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000003 /* AppAudioProfile.swift */,
+				A20000000000000000000004 /* AppSession.swift */,
+				A20000000000000000000005 /* AudioDevice.swift */,
+				A20000000000000000000006 /* UserSettings.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000005 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000007 /* AudioDeviceManager.swift */,
+				A20000000000000000000008 /* CoreAudioTapRoutingService.swift */,
+				A20000000000000000000009 /* RoutingService.swift */,
+				A2000000000000000000000A /* RoutingServiceFactory.swift */,
+				A2000000000000000000000B /* RunningAppMonitor.swift */,
+				A2000000000000000000000C /* StubRoutingService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000006 /* Stores */ = {
+			isa = PBXGroup;
+			children = (
+				A2000000000000000000000D /* AppStateStore.swift */,
+				A2000000000000000000000E /* ProfileStore.swift */,
+			);
+			path = Stores;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000007 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A2000000000000000000000F /* AppSessionRowView.swift */,
+				A20000000000000000000010 /* MenuBarView.swift */,
+				A20000000000000000000011 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000008 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000012 /* Info.plist */,
+			);
+			path = SoundControlMac;
+			sourceTree = SOURCE_ROOT;
+		};
+		A40000000000000000000009 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000013 /* SoundControlMac.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000000000000000000001 /* SoundControlMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A70000000000000000000001 /* Build configuration list for PBXNativeTarget "SoundControlMac" */;
+			buildPhases = (
+				A30000000000000000000002 /* Sources */,
+				A30000000000000000000001 /* Frameworks */,
+				A30000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SoundControlMac;
+			productName = SoundControlMac;
+			productReference = A20000000000000000000013 /* SoundControlMac.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A60000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					A50000000000000000000001 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+				};
+			};
+			buildConfigurationList = A70000000000000000000002 /* Build configuration list for PBXProject "SoundControlMac" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A40000000000000000000001;
+			productRefGroup = A40000000000000000000009 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A50000000000000000000001 /* SoundControlMac */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A30000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A30000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* AppDelegate.swift in Sources */,
+				A10000000000000000000002 /* SoundControlMacApp.swift in Sources */,
+				A10000000000000000000003 /* AppAudioProfile.swift in Sources */,
+				A10000000000000000000004 /* AppSession.swift in Sources */,
+				A10000000000000000000005 /* AudioDevice.swift in Sources */,
+				A10000000000000000000006 /* UserSettings.swift in Sources */,
+				A10000000000000000000007 /* AudioDeviceManager.swift in Sources */,
+				A10000000000000000000008 /* CoreAudioTapRoutingService.swift in Sources */,
+				A10000000000000000000009 /* RoutingService.swift in Sources */,
+				A1000000000000000000000A /* RoutingServiceFactory.swift in Sources */,
+				A1000000000000000000000B /* RunningAppMonitor.swift in Sources */,
+				A1000000000000000000000C /* StubRoutingService.swift in Sources */,
+				A1000000000000000000000D /* AppStateStore.swift in Sources */,
+				A1000000000000000000000E /* ProfileStore.swift in Sources */,
+				A1000000000000000000000F /* AppSessionRowView.swift in Sources */,
+				A10000000000000000000010 /* MenuBarView.swift in Sources */,
+				A10000000000000000000011 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A80000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A80000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+			};
+			name = Release;
+		};
+		A80000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SoundControlMac/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minkyu.soundcontrolmac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A80000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SoundControlMac/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minkyu.soundcontrolmac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A70000000000000000000001 /* Build configuration list for PBXNativeTarget "SoundControlMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A80000000000000000000003 /* Debug */,
+				A80000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A70000000000000000000002 /* Build configuration list for PBXProject "SoundControlMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A80000000000000000000001 /* Debug */,
+				A80000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A60000000000000000000001 /* Project object */;
+}
