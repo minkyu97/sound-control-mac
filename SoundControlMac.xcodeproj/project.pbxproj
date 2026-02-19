@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		95F7DE142F46A17C00374D5B /* AppEQSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F7DE132F46A17C00374D5B /* AppEQSettings.swift */; };
 		A10000000000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* AppDelegate.swift */; };
 		A10000000000000000000002 /* SoundControlMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* SoundControlMacApp.swift */; };
 		A10000000000000000000003 /* AppAudioProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* AppAudioProfile.swift */; };
@@ -27,6 +28,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		95F7DE132F46A17C00374D5B /* AppEQSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEQSettings.swift; sourceTree = "<group>"; };
 		A20000000000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* SoundControlMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundControlMacApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000003 /* AppAudioProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAudioProfile.swift; sourceTree = "<group>"; };
@@ -62,13 +64,13 @@
 		A40000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
-				A40000000000000000000002 /* Sources */,
-				A40000000000000000000008 /* Support */,
+				A40000000000000000000002 /* Sources/SoundControlMac */,
+				A40000000000000000000008 /* SoundControlMac */,
 				A40000000000000000000009 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		A40000000000000000000002 /* Sources */ = {
+		A40000000000000000000002 /* Sources/SoundControlMac */ = {
 			isa = PBXGroup;
 			children = (
 				A40000000000000000000003 /* App */,
@@ -92,6 +94,7 @@
 		A40000000000000000000004 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				95F7DE132F46A17C00374D5B /* AppEQSettings.swift */,
 				A20000000000000000000003 /* AppAudioProfile.swift */,
 				A20000000000000000000004 /* AppSession.swift */,
 				A20000000000000000000005 /* AudioDevice.swift */,
@@ -132,7 +135,7 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		A40000000000000000000008 /* Support */ = {
+		A40000000000000000000008 /* SoundControlMac */ = {
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000012 /* Info.plist */,
@@ -224,6 +227,7 @@
 				A10000000000000000000006 /* UserSettings.swift in Sources */,
 				A10000000000000000000007 /* AudioDeviceManager.swift in Sources */,
 				A10000000000000000000008 /* CoreAudioTapRoutingService.swift in Sources */,
+				95F7DE142F46A17C00374D5B /* AppEQSettings.swift in Sources */,
 				A10000000000000000000009 /* RoutingService.swift in Sources */,
 				A1000000000000000000000A /* RoutingServiceFactory.swift in Sources */,
 				A1000000000000000000000B /* RunningAppMonitor.swift in Sources */,

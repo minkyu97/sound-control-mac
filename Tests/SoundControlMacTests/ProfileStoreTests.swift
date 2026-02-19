@@ -12,7 +12,8 @@ final class ProfileStoreTests: XCTestCase {
             bundleIdentifier: "com.example.player",
             volume: 0.25,
             isMuted: false,
-            preferredOutputDeviceUID: "speaker-1"
+            preferredOutputDeviceUID: "speaker-1",
+            eq: AppEQSettings(gainsDB: [2.5, -1.5, 0, 3.0, -2.0])
         )
 
         store.setProfile(profile)
@@ -21,6 +22,7 @@ final class ProfileStoreTests: XCTestCase {
         let loaded = reloadedStore.profile(for: "com.example.player")
         XCTAssertEqual(loaded.volume, 0.25, accuracy: 0.0001)
         XCTAssertEqual(loaded.preferredOutputDeviceUID, "speaker-1")
+        XCTAssertEqual(loaded.eq.gainsDB, [2.5, -1.5, 0, 3.0, -2.0])
     }
 
     func testWhenRememberDisabledProfileStaysRuntimeOnly() throws {
@@ -33,12 +35,44 @@ final class ProfileStoreTests: XCTestCase {
         var runtimeProfile = AppAudioProfile.default(for: "com.example.player")
         runtimeProfile.volume = 0.4
         runtimeProfile.preferredOutputDeviceUID = "headset-2"
+        runtimeProfile.eq = AppEQSettings(gainsDB: [4, 2, 0, -2, -4])
         store.setProfile(runtimeProfile)
 
         let reloadedStore = ProfileStore(stateURL: stateURL)
         let loaded = reloadedStore.profile(for: "com.example.player")
         XCTAssertEqual(loaded.volume, 1.0, accuracy: 0.0001)
         XCTAssertNil(loaded.preferredOutputDeviceUID)
+        XCTAssertEqual(loaded.eq, .flat)
+    }
+
+    func testLegacyStateWithoutEQDefaultsToFlat() throws {
+        let tempDirectory = try makeTempDirectory()
+        let stateURL = tempDirectory.appendingPathComponent("state.json")
+
+        let legacyState = """
+        {
+          "settings": {
+            "rememberPerAppSelection": true
+          },
+          "profiles": {
+            "com.example.player": {
+              "bundleIdentifier": "com.example.player",
+              "volume": 0.42,
+              "isMuted": false,
+              "preferredOutputDeviceUID": "speaker-legacy"
+            }
+          }
+        }
+        """
+
+        try legacyState.data(using: .utf8)?.write(to: stateURL)
+
+        let store = ProfileStore(stateURL: stateURL)
+        let loaded = store.profile(for: "com.example.player")
+
+        XCTAssertEqual(loaded.volume, 0.42, accuracy: 0.0001)
+        XCTAssertEqual(loaded.preferredOutputDeviceUID, "speaker-legacy")
+        XCTAssertEqual(loaded.eq, .flat)
     }
 
     private func makeTempDirectory() throws -> URL {

@@ -68,6 +68,16 @@ final class AppStateStore: ObservableObject {
         storeAndApply(profile: profile, for: session)
     }
 
+    func updateEQBand(for session: AppSession, bandIndex: Int, gainDB: Float) {
+        guard bandIndex >= 0 && bandIndex < AppEQSettings.bandCount else {
+            return
+        }
+
+        var profile = profile(for: session)
+        profile.eq.setGain(at: bandIndex, gainDB: gainDB)
+        storeAndApply(profile: profile, for: session)
+    }
+
     func setPreferredOutputDevice(for session: AppSession, uid: String?) {
         var profile = profile(for: session)
         profile.preferredOutputDeviceUID = uid
@@ -80,6 +90,10 @@ final class AppStateStore: ObservableObject {
 
     func setDefaultInputDevice(uid: String) {
         deviceManager.setDefaultInputDevice(uid: uid)
+    }
+
+    func setGlobalDeviceVolume(uid: String, kind: AudioDevice.Kind, volume: Double) {
+        deviceManager.setDeviceVolume(uid: uid, kind: kind, volume: volume)
     }
 
     func setRememberPerAppSelection(_ enabled: Bool) {
@@ -167,6 +181,7 @@ final class AppStateStore: ObservableObject {
         if profile.preferredOutputDeviceUID != nil { return true }
         if profile.isMuted { return true }
         if abs(profile.volume - 1.0) > 0.0001 { return true }
+        if !profile.eq.isFlat { return true }
 
         // Keep route active only for non-default profiles.
         return profile != .default(for: bundleIdentifier)

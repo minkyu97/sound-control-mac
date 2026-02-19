@@ -11,6 +11,8 @@ struct AudioDevice: Identifiable, Hashable {
     let uid: String
     let name: String
     let kind: Kind
+    let iconURL: URL?
+    let volume: Double?
 
     var id: String { uid }
 }

@@ -17,28 +17,223 @@ final class CoreAudioTapRoutingService: RoutingService, @unchecked Sendable {
         }
     }
 
-    private final class GainState: @unchecked Sendable {
+    private final class ProcessorState: @unchecked Sendable {
+        private struct BiquadCoefficients {
+            let b0: Float
+            let b1: Float
+            let b2: Float
+            let a1: Float
+            let a2: Float
+
+            static let passthrough = BiquadCoefficients(b0: 1, b1: 0, b2: 0, a1: 0, a2: 0)
+        }
+
+        private struct BiquadState {
+            var z1: Float = 0
+            var z2: Float = 0
+        }
+
+        private struct ChannelState {
+            var bandStates: [BiquadState]
+        }
+
         private let lock = NSLock()
         private var volume: Float
         private var muted: Bool
+        private var eqGainsDB: [Float]
+        private var sampleRate: Float
+        private var coefficients: [BiquadCoefficients]
+        private var channelStates: [ChannelState] = []
 
-        init(volume: Float, muted: Bool) {
-            self.volume = volume
+        init(volume: Float, muted: Bool, eqGainsDB: [Float], sampleRate: Float) {
+            self.volume = min(max(volume, 0), 1)
             self.muted = muted
+            self.eqGainsDB = Self.normalizedGains(eqGainsDB)
+            self.sampleRate = max(sampleRate, 1)
+            self.coefficients = Self.makeCoefficients(gainsDB: self.eqGainsDB, sampleRate: self.sampleRate)
         }
 
-        func update(volume: Float, muted: Bool) {
+        func update(volume: Float, muted: Bool, eqGainsDB: [Float]) {
             lock.lock()
-            self.volume = volume
+            self.volume = min(max(volume, 0), 1)
             self.muted = muted
+
+            let normalized = Self.normalizedGains(eqGainsDB)
+            if normalized != self.eqGainsDB {
+                self.eqGainsDB = normalized
+                self.coefficients = Self.makeCoefficients(gainsDB: normalized, sampleRate: sampleRate)
+                resetFilterState()
+            }
             lock.unlock()
         }
 
-        func gain() -> Float {
+        func process(inputData: UnsafePointer<AudioBufferList>, outputData: UnsafeMutablePointer<AudioBufferList>) {
             lock.lock()
-            let effective = muted ? 0 : volume
-            lock.unlock()
-            return effective
+            defer { lock.unlock() }
+
+            let inputBuffers = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: inputData))
+            let outputBuffers = UnsafeMutableAudioBufferListPointer(outputData)
+            let count = min(inputBuffers.count, outputBuffers.count)
+
+            let effectiveGain = muted ? 0 : volume
+            let eqIsFlat = eqGainsDB.allSatisfy { abs($0) < 0.0001 }
+
+            var globalChannelBase = 0
+
+            for index in 0..<count {
+                let source = inputBuffers[index]
+                var destination = outputBuffers[index]
+
+                let byteCount = min(Int(source.mDataByteSize), Int(destination.mDataByteSize))
+                guard byteCount > 0, let src = source.mData, let dst = destination.mData else {
+                    globalChannelBase += max(1, Int(source.mNumberChannels))
+                    continue
+                }
+
+                let channelsInBuffer = max(1, Int(source.mNumberChannels))
+                let scalarCount = byteCount / MemoryLayout<Float>.size
+                let frameCount = scalarCount / channelsInBuffer
+                let sampleCount = frameCount * channelsInBuffer
+
+                guard sampleCount > 0 else {
+                    destination.mDataByteSize = 0
+                    outputBuffers[index] = destination
+                    globalChannelBase += channelsInBuffer
+                    continue
+                }
+
+                ensureChannelCapacity(globalChannelBase + channelsInBuffer)
+
+                if eqIsFlat && effectiveGain == 1 {
+                    memcpy(dst, src, sampleCount * MemoryLayout<Float>.size)
+                    destination.mDataByteSize = UInt32(sampleCount * MemoryLayout<Float>.size)
+                    outputBuffers[index] = destination
+                    globalChannelBase += channelsInBuffer
+                    continue
+                }
+
+                let sourceSamples = src.assumingMemoryBound(to: Float.self)
+                let destinationSamples = dst.assumingMemoryBound(to: Float.self)
+
+                for frameIndex in 0..<frameCount {
+                    for channelIndex in 0..<channelsInBuffer {
+                        let sampleIndex = frameIndex * channelsInBuffer + channelIndex
+                        var sample = sourceSamples[sampleIndex]
+
+                        if !eqIsFlat {
+                            sample = applyEQ(sample: sample, channelIndex: globalChannelBase + channelIndex)
+                        }
+
+                        sample *= effectiveGain
+                        destinationSamples[sampleIndex] = min(max(sample, -1), 1)
+                    }
+                }
+
+                destination.mDataByteSize = UInt32(sampleCount * MemoryLayout<Float>.size)
+                outputBuffers[index] = destination
+                globalChannelBase += channelsInBuffer
+            }
+        }
+
+        private func ensureChannelCapacity(_ count: Int) {
+            while channelStates.count < count {
+                channelStates.append(
+                    ChannelState(
+                        bandStates: Array(repeating: BiquadState(), count: coefficients.count)
+                    )
+                )
+            }
+
+            for index in channelStates.indices where channelStates[index].bandStates.count != coefficients.count {
+                channelStates[index].bandStates = Array(repeating: BiquadState(), count: coefficients.count)
+            }
+        }
+
+        private func resetFilterState() {
+            for index in channelStates.indices {
+                channelStates[index].bandStates = Array(repeating: BiquadState(), count: coefficients.count)
+            }
+        }
+
+        private func applyEQ(sample: Float, channelIndex: Int) -> Float {
+            var value = sample
+
+            for bandIndex in coefficients.indices {
+                let coefficients = coefficients[bandIndex]
+                var state = channelStates[channelIndex].bandStates[bandIndex]
+
+                let output = coefficients.b0 * value + state.z1
+                let nextZ1 = coefficients.b1 * value - coefficients.a1 * output + state.z2
+                let nextZ2 = coefficients.b2 * value - coefficients.a2 * output
+
+                state.z1 = nextZ1
+                state.z2 = nextZ2
+                channelStates[channelIndex].bandStates[bandIndex] = state
+                value = output
+            }
+
+            return value
+        }
+
+        private static func normalizedGains(_ gains: [Float]) -> [Float] {
+            var normalized = Array(gains.prefix(AppEQSettings.bandCount))
+            if normalized.count < AppEQSettings.bandCount {
+                normalized.append(contentsOf: repeatElement(0, count: AppEQSettings.bandCount - normalized.count))
+            }
+
+            return normalized.map {
+                min(max($0, AppEQSettings.minGainDB), AppEQSettings.maxGainDB)
+            }
+        }
+
+        private static func makeCoefficients(gainsDB: [Float], sampleRate: Float) -> [BiquadCoefficients] {
+            let frequencyCount = min(AppEQSettings.centerFrequencies.count, gainsDB.count)
+
+            return (0..<frequencyCount).map { index in
+                makePeakingCoefficients(
+                    centerFrequency: AppEQSettings.centerFrequencies[index],
+                    gainDB: gainsDB[index],
+                    q: 1.0,
+                    sampleRate: sampleRate
+                )
+            }
+        }
+
+        private static func makePeakingCoefficients(
+            centerFrequency: Float,
+            gainDB: Float,
+            q: Float,
+            sampleRate: Float
+        ) -> BiquadCoefficients {
+            guard abs(gainDB) > 0.0001, sampleRate > 0 else {
+                return .passthrough
+            }
+
+            let nyquist = sampleRate * 0.5
+            let safeFrequency = min(max(centerFrequency, 20), nyquist * 0.98)
+            let omega = 2 * Float.pi * safeFrequency / sampleRate
+            let alpha = sin(omega) / (2 * q)
+            let amplitude = pow(10, gainDB / 40)
+            let cosOmega = cos(omega)
+
+            let b0 = 1 + alpha * amplitude
+            let b1 = -2 * cosOmega
+            let b2 = 1 - alpha * amplitude
+            let a0 = 1 + alpha / amplitude
+            let a1 = -2 * cosOmega
+            let a2 = 1 - alpha / amplitude
+
+            guard abs(a0) > 0.0000001 else {
+                return .passthrough
+            }
+
+            return BiquadCoefficients(
+                b0: b0 / a0,
+                b1: b1 / a0,
+                b2: b2 / a0,
+                a1: a1 / a0,
+                a2: a2 / a0
+            )
         }
     }
 
@@ -52,7 +247,7 @@ final class CoreAudioTapRoutingService: RoutingService, @unchecked Sendable {
         let tapUID: String
         let aggregateDeviceID: AudioObjectID
         let ioProcID: AudioDeviceIOProcID
-        let gainState: GainState
+        let processorState: ProcessorState
     }
 
     private let queue = DispatchQueue(label: "com.soundcontrol.mac.routing.tap", qos: .userInitiated)
@@ -98,12 +293,13 @@ final class CoreAudioTapRoutingService: RoutingService, @unchecked Sendable {
 
         let targetVolume = Float(max(0, min(1, request.profile.volume)))
         let targetMuted = request.profile.isMuted
+        let targetEQGains = request.profile.eq.gainsDB
 
         if let existing = sessions[request.sessionID] {
             if existing.outputUID != outputUID || existing.candidatePIDs != request.normalizedCandidatePIDs {
                 destroySession(sessionID: request.sessionID)
             } else {
-                existing.gainState.update(volume: targetVolume, muted: targetMuted)
+                existing.processorState.update(volume: targetVolume, muted: targetMuted, eqGainsDB: targetEQGains)
                 return
             }
         }
@@ -113,7 +309,8 @@ final class CoreAudioTapRoutingService: RoutingService, @unchecked Sendable {
                 request: request,
                 outputUID: outputUID,
                 volume: targetVolume,
-                muted: targetMuted
+                muted: targetMuted,
+                eqGainsDB: targetEQGains
             )
 
             sessions[request.sessionID] = newSession
@@ -149,7 +346,8 @@ final class CoreAudioTapRoutingService: RoutingService, @unchecked Sendable {
         request: RoutingRequest,
         outputUID: String,
         volume: Float,
-        muted: Bool
+        muted: Bool,
+        eqGainsDB: [Float]
     ) throws -> TapSession {
         let processObjectIDs = resolvedProcessObjectIDs(for: request)
         guard !processObjectIDs.isEmpty else {
@@ -181,11 +379,18 @@ final class CoreAudioTapRoutingService: RoutingService, @unchecked Sendable {
             throw error
         }
 
-        let gainState = GainState(volume: volume, muted: muted)
+        let sampleRate = Float(float64Property(objectID: aggregateDeviceID, selector: kAudioDevicePropertyNominalSampleRate) ?? 48_000)
+
+        let processorState = ProcessorState(
+            volume: volume,
+            muted: muted,
+            eqGainsDB: eqGainsDB,
+            sampleRate: sampleRate
+        )
 
         var ioProcID: AudioDeviceIOProcID?
         let blockStatus = AudioDeviceCreateIOProcIDWithBlock(&ioProcID, aggregateDeviceID, nil) { _, inputData, _, outputData, _ in
-            Self.renderAudio(inputData: inputData, outputData: outputData, gain: gainState.gain())
+            Self.renderAudio(inputData: inputData, outputData: outputData, processorState: processorState)
         }
 
         guard blockStatus == noErr, let ioProcID else {
@@ -212,7 +417,7 @@ final class CoreAudioTapRoutingService: RoutingService, @unchecked Sendable {
             tapUID: tapUID,
             aggregateDeviceID: aggregateDeviceID,
             ioProcID: ioProcID,
-            gainState: gainState
+            processorState: processorState
         )
     }
 
@@ -428,6 +633,23 @@ final class CoreAudioTapRoutingService: RoutingService, @unchecked Sendable {
         return value as String
     }
 
+    private func float64Property(objectID: AudioObjectID, selector: AudioObjectPropertySelector) -> Float64? {
+        var address = AudioObjectPropertyAddress(
+            mSelector: selector,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        var value: Float64 = 0
+        var dataSize = UInt32(MemoryLayout<Float64>.size)
+        let status = AudioObjectGetPropertyData(objectID, &address, 0, nil, &dataSize, &value)
+        guard status == noErr else {
+            return nil
+        }
+
+        return value
+    }
+
     private func uint32Property(objectID: AudioObjectID, selector: AudioObjectPropertySelector) -> UInt32? {
         var address = AudioObjectPropertyAddress(
             mSelector: selector,
@@ -480,41 +702,10 @@ final class CoreAudioTapRoutingService: RoutingService, @unchecked Sendable {
     private static func renderAudio(
         inputData: UnsafePointer<AudioBufferList>?,
         outputData: UnsafeMutablePointer<AudioBufferList>?,
-        gain: Float
+        processorState: ProcessorState
     ) {
         guard let inputData, let outputData else { return }
-
-        let inputBuffers = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: inputData))
-        let outputBuffers = UnsafeMutableAudioBufferListPointer(outputData)
-        let count = min(inputBuffers.count, outputBuffers.count)
-
-        for index in 0..<count {
-            let source = inputBuffers[index]
-            var destination = outputBuffers[index]
-
-            let byteCount = min(Int(source.mDataByteSize), Int(destination.mDataByteSize))
-            guard byteCount > 0, let src = source.mData, let dst = destination.mData else {
-                continue
-            }
-
-            if gain == 1 {
-                memcpy(dst, src, byteCount)
-                destination.mDataByteSize = UInt32(byteCount)
-                outputBuffers[index] = destination
-                continue
-            }
-
-            let sampleCount = byteCount / MemoryLayout<Float>.size
-            let sourceSamples = src.assumingMemoryBound(to: Float.self)
-            let destinationSamples = dst.assumingMemoryBound(to: Float.self)
-
-            for i in 0..<sampleCount {
-                destinationSamples[i] = sourceSamples[i] * gain
-            }
-
-            destination.mDataByteSize = UInt32(sampleCount * MemoryLayout<Float>.size)
-            outputBuffers[index] = destination
-        }
+        processorState.process(inputData: inputData, outputData: outputData)
     }
 }
 

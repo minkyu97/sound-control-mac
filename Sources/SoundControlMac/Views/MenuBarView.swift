@@ -2,17 +2,22 @@ import AppKit
 import SwiftUI
 
 struct MenuBarView: View {
+    private enum GlobalTab: String, CaseIterable {
+        case output = "Output"
+        case input = "Input"
+    }
+
     @EnvironmentObject private var appState: AppStateStore
     @Environment(\.openSettings) private var openSettings
 
-    private let deviceLabelWidth: CGFloat = 52
+    @State private var selectedGlobalTab: GlobalTab = .output
 
     var body: some View {
         VStack(spacing: 12) {
             header
-            globalDeviceControls
+            globalControls
             Divider()
-            sessionsList
+            appsList
             Divider()
             footerActions
         }
@@ -28,7 +33,9 @@ struct MenuBarView: View {
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
+
             Spacer()
+
             Button("Refresh") {
                 appState.refresh()
             }
@@ -36,57 +43,109 @@ struct MenuBarView: View {
         }
     }
 
-    private var globalDeviceControls: some View {
+    private var globalControls: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Global audio devices")
+            Text("GLOBAL")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
 
-            globalDevicePickerRow(
-                title: "Output",
-                selection: Binding(
-                    get: { appState.defaultOutputUID ?? "" },
-                    set: { uid in
-                        guard !uid.isEmpty else { return }
-                        appState.setDefaultOutputDevice(uid: uid)
-                    }
-                ),
-                devices: appState.outputDevices
-            )
-
-            globalDevicePickerRow(
-                title: "Input",
-                selection: Binding(
-                    get: { appState.defaultInputUID ?? "" },
-                    set: { uid in
-                        guard !uid.isEmpty else { return }
-                        appState.setDefaultInputDevice(uid: uid)
-                    }
-                ),
-                devices: appState.inputDevices
-            )
-        }
-    }
-
-    private func globalDevicePickerRow(title: String, selection: Binding<String>, devices: [AudioDevice]) -> some View {
-        HStack(spacing: 8) {
-            Text(title)
-                .font(.system(size: 12, weight: .medium))
-                .frame(width: deviceLabelWidth, alignment: .leading)
-
-            Picker("", selection: selection) {
-                ForEach(devices) { device in
-                    Text(device.name).tag(device.uid)
+            Picker("Global Tab", selection: $selectedGlobalTab) {
+                ForEach(GlobalTab.allCases, id: \.self) { tab in
+                    Text(tab.rawValue).tag(tab)
                 }
             }
-            .labelsHidden()
-            .frame(maxWidth: .infinity)
+            .pickerStyle(.segmented)
+
+            if activeGlobalDevices.isEmpty {
+                Text("No audio devices found")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                VStack(spacing: 4) {
+                    ForEach(activeGlobalDevices) { device in
+                        globalDeviceRow(device)
+                    }
+                }
+            }
         }
     }
 
-    private var sessionsList: some View {
+    private var activeGlobalDevices: [AudioDevice] {
+        switch selectedGlobalTab {
+        case .output:
+            return appState.outputDevices
+        case .input:
+            return appState.inputDevices
+        }
+    }
+
+    private var selectedGlobalUID: String? {
+        switch selectedGlobalTab {
+        case .output:
+            return appState.defaultOutputUID
+        case .input:
+            return appState.defaultInputUID
+        }
+    }
+
+    private func globalDeviceRow(_ device: AudioDevice) -> some View {
+        HStack(spacing: 8) {
+            Button(action: {
+                selectGlobalDevice(device)
+            }) {
+                Image(systemName: selectedGlobalUID == device.uid ? "largecircle.fill.circle" : "circle")
+                    .font(.system(size: 11, weight: .semibold))
+                    .frame(width: 14, height: 14)
+            }
+            .buttonStyle(.plain)
+            .frame(width: 18, height: 18)
+
+            AudioDeviceIconView(device: device)
+                .frame(width: 18, height: 18)
+
+            Text(device.name)
+                .font(.system(size: 12, weight: .medium))
+                .lineLimit(1)
+                .frame(minWidth: 110, maxWidth: .infinity, alignment: .leading)
+
+            Slider(
+                value: Binding(
+                    get: { device.volume ?? 0 },
+                    set: { newValue in
+                        appState.setGlobalDeviceVolume(uid: device.uid, kind: device.kind, volume: newValue)
+                    }
+                ),
+                in: 0...1
+            )
+            .disabled(device.volume == nil)
+            .frame(maxWidth: .infinity)
+
+            Text(device.volume.map { "\(Int($0 * 100))%" } ?? "N/A")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(device.volume == nil ? .tertiary : .secondary)
+                .frame(width: 38, alignment: .trailing)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(NSColor.controlBackgroundColor))
+        )
+    }
+
+    private func selectGlobalDevice(_ device: AudioDevice) {
+        switch selectedGlobalTab {
+        case .output:
+            appState.setDefaultOutputDevice(uid: device.uid)
+        case .input:
+            appState.setDefaultInputDevice(uid: device.uid)
+        }
+    }
+
+    private var appsList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Running applications")
+            Text("APPS")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
 
@@ -107,6 +166,9 @@ struct MenuBarView: View {
                                 },
                                 onMuteToggle: {
                                     appState.toggleMute(for: session)
+                                },
+                                onEQBandChange: { bandIndex, gainDB in
+                                    appState.updateEQBand(for: session, bandIndex: bandIndex, gainDB: gainDB)
                                 }
                             )
                         }
@@ -149,6 +211,37 @@ struct MenuBarView: View {
             }
 
             NSApplication.shared.activate(ignoringOtherApps: true)
+        }
+    }
+}
+
+private struct AudioDeviceIconView: View {
+    let device: AudioDevice
+
+    var body: some View {
+        Group {
+            if let iconURL = device.iconURL,
+               let iconImage = NSImage(contentsOf: iconURL) {
+                Image(nsImage: iconImage)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                Image(systemName: fallbackSystemImage)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 4))
+    }
+
+    private var fallbackSystemImage: String {
+        switch device.kind {
+        case .output:
+            return "speaker.wave.2.fill"
+        case .input:
+            return "mic.fill"
         }
     }
 }

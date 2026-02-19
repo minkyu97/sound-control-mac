@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:sound-control-mac}",
+            "name": "Debug sound-control-mac",
+            "target": "sound-control-mac",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug sound-control-mac"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:sound-control-mac}",
+            "name": "Release sound-control-mac",
+            "target": "sound-control-mac",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release sound-control-mac"
+        }
+    ]
+}
