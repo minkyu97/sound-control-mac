@@ -5,12 +5,37 @@ final class ProfileStore: ObservableObject {
     private struct PersistedState: Codable {
         var settings: UserSettings
         var profiles: [String: AppAudioProfile]
+        var deviceEQProfiles: [String: AppEQSettings]
+
+        enum CodingKeys: String, CodingKey {
+            case settings
+            case profiles
+            case deviceEQProfiles
+        }
+
+        init(
+            settings: UserSettings,
+            profiles: [String: AppAudioProfile],
+            deviceEQProfiles: [String: AppEQSettings] = [:]
+        ) {
+            self.settings = settings
+            self.profiles = profiles
+            self.deviceEQProfiles = deviceEQProfiles
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            settings = try container.decode(UserSettings.self, forKey: .settings)
+            profiles = try container.decode([String: AppAudioProfile].self, forKey: .profiles)
+            deviceEQProfiles = try container.decodeIfPresent([String: AppEQSettings].self, forKey: .deviceEQProfiles) ?? [:]
+        }
     }
 
     @Published private(set) var settings = UserSettings()
 
     private(set) var persistedProfiles: [String: AppAudioProfile] = [:]
     private(set) var runtimeProfiles: [String: AppAudioProfile] = [:]
+    private(set) var deviceEQProfiles: [String: AppEQSettings] = [:]
 
     private let stateURL: URL
     private let encoder = JSONEncoder()
@@ -42,6 +67,20 @@ final class ProfileStore: ObservableObject {
         runtimeProfiles[profile.bundleIdentifier] = profile
     }
 
+    func deviceEQ(forDeviceUID uid: String) -> AppEQSettings {
+        deviceEQProfiles[uid] ?? .flat
+    }
+
+    func setDeviceEQ(_ eq: AppEQSettings, forDeviceUID uid: String) {
+        if eq.isFlat {
+            deviceEQProfiles.removeValue(forKey: uid)
+        } else {
+            deviceEQProfiles[uid] = eq
+        }
+
+        save()
+    }
+
     func setRememberPerAppSelection(_ enabled: Bool) {
         guard settings.rememberPerAppSelection != enabled else {
             return
@@ -67,9 +106,11 @@ final class ProfileStore: ObservableObject {
             let state = try decoder.decode(PersistedState.self, from: data)
             settings = state.settings
             persistedProfiles = state.profiles
+            deviceEQProfiles = state.deviceEQProfiles
         } catch {
             settings = UserSettings()
             persistedProfiles = [:]
+            deviceEQProfiles = [:]
         }
     }
 
@@ -78,7 +119,11 @@ final class ProfileStore: ObservableObject {
             let directoryURL = stateURL.deletingLastPathComponent()
             try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
 
-            let state = PersistedState(settings: settings, profiles: persistedProfiles)
+            let state = PersistedState(
+                settings: settings,
+                profiles: persistedProfiles,
+                deviceEQProfiles: deviceEQProfiles
+            )
             let data = try encoder.encode(state)
             try data.write(to: stateURL, options: .atomic)
         } catch {

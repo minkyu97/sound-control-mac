@@ -8,6 +8,7 @@ final class AppStateStore: ObservableObject {
     @Published private(set) var defaultOutputUID: String?
     @Published private(set) var defaultInputUID: String?
     @Published private(set) var settings: UserSettings
+    @Published private(set) var deviceEQProfiles: [String: AppEQSettings]
 
     private let profileStore: ProfileStore
     private let deviceManager: AudioDeviceManager
@@ -27,6 +28,7 @@ final class AppStateStore: ObservableObject {
         self.appMonitor = appMonitor
         self.routingService = routingService
         self.settings = profileStore.settings
+        self.deviceEQProfiles = profileStore.deviceEQProfiles
 
         bindDeviceManager()
         bindAppMonitor()
@@ -96,6 +98,22 @@ final class AppStateStore: ObservableObject {
         deviceManager.setDeviceVolume(uid: uid, kind: kind, volume: volume)
     }
 
+    func deviceEQ(forOutputDeviceUID uid: String) -> AppEQSettings {
+        deviceEQProfiles[uid] ?? .flat
+    }
+
+    func updateDeviceEQBand(forOutputDeviceUID uid: String, bandIndex: Int, gainDB: Float) {
+        guard bandIndex >= 0 && bandIndex < AppEQSettings.bandCount else {
+            return
+        }
+
+        var eq = deviceEQ(forOutputDeviceUID: uid)
+        eq.setGain(at: bandIndex, gainDB: gainDB)
+        profileStore.setDeviceEQ(eq, forDeviceUID: uid)
+        refreshDeviceEQProfilesFromStore()
+        applyProfilesToRunningSessions()
+    }
+
     func setRememberPerAppSelection(_ enabled: Bool) {
         profileStore.setRememberPerAppSelection(enabled)
         settings = profileStore.settings
@@ -143,6 +161,10 @@ final class AppStateStore: ObservableObject {
         applyProfilesToRunningSessions()
     }
 
+    private func refreshDeviceEQProfilesFromStore() {
+        deviceEQProfiles = profileStore.deviceEQProfiles
+    }
+
     private func rebuildProfilesFromStore() {
         var newProfiles: [String: AppAudioProfile] = [:]
 
@@ -157,9 +179,11 @@ final class AppStateStore: ObservableObject {
 
     private func applyProfilesToRunningSessions() {
         for session in sessions {
-            let profile = profile(for: session)
-            if shouldRouteAudio(for: profile, bundleIdentifier: session.bundleIdentifier) {
-                routingService.apply(profile: profile, to: session)
+            let baseProfile = profile(for: session)
+            let effectiveProfile = effectiveProfile(for: baseProfile)
+
+            if shouldRouteAudio(for: effectiveProfile, bundleIdentifier: session.bundleIdentifier) {
+                routingService.apply(profile: effectiveProfile, to: session)
             } else {
                 routingService.clearRouting(for: session)
             }
@@ -170,11 +194,32 @@ final class AppStateStore: ObservableObject {
         activeProfiles[session.bundleIdentifier] = profile
         profileStore.setProfile(profile)
 
-        if shouldRouteAudio(for: profile, bundleIdentifier: session.bundleIdentifier) {
-            routingService.apply(profile: profile, to: session)
+        let effectiveProfile = effectiveProfile(for: profile)
+        if shouldRouteAudio(for: effectiveProfile, bundleIdentifier: session.bundleIdentifier) {
+            routingService.apply(profile: effectiveProfile, to: session)
         } else {
             routingService.clearRouting(for: session)
         }
+    }
+
+    private func effectiveProfile(for profile: AppAudioProfile) -> AppAudioProfile {
+        guard profile.eq.isFlat else {
+            return profile
+        }
+
+        guard let outputUID = selectedOutputUID(for: profile),
+              let deviceEQ = deviceEQProfiles[outputUID],
+              !deviceEQ.isFlat else {
+            return profile
+        }
+
+        var effective = profile
+        effective.eq = deviceEQ
+        return effective
+    }
+
+    private func selectedOutputUID(for profile: AppAudioProfile) -> String? {
+        profile.preferredOutputDeviceUID ?? defaultOutputUID
     }
 
     private func shouldRouteAudio(for profile: AppAudioProfile, bundleIdentifier: String) -> Bool {

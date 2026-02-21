@@ -73,6 +73,25 @@ final class ProfileStoreTests: XCTestCase {
         XCTAssertEqual(loaded.volume, 0.42, accuracy: 0.0001)
         XCTAssertEqual(loaded.preferredOutputDeviceUID, "speaker-legacy")
         XCTAssertEqual(loaded.eq, .flat)
+        XCTAssertEqual(store.deviceEQ(forDeviceUID: "speaker-legacy"), .flat)
+    }
+
+    func testDeviceEQPersistsAcrossStoreReload() throws {
+        let tempDirectory = try makeTempDirectory()
+        let stateURL = tempDirectory.appendingPathComponent("state.json")
+
+        let store = ProfileStore(stateURL: stateURL)
+
+        var eq = AppEQSettings.flat
+        eq.setGain(at: 0, gainDB: 2.5)
+        eq.setGain(at: 2, gainDB: -3.0)
+        eq.setGain(at: 4, gainDB: 4.5)
+        store.setDeviceEQ(eq, forDeviceUID: "display-speaker-1")
+
+        let reloadedStore = ProfileStore(stateURL: stateURL)
+        let loaded = reloadedStore.deviceEQ(forDeviceUID: "display-speaker-1")
+
+        XCTAssertEqual(loaded, eq)
     }
 
     private func makeTempDirectory() throws -> URL {

@@ -5,10 +5,11 @@ Menu bar macOS app for per-app audio control with persistent app profiles.
 ## Implemented
 
 - SwiftUI menu bar UI (`MenuBarExtra`) with:
-  - `GLOBAL` section:
+  - `DEVICE` section:
     - Output/Input tabs
-    - Per-device row controls (default-device radio, icon, name, slider, percentage)
+    - Per-device row controls (default-device radio, icon, name, slider, typed percentage input)
     - Per-device hardware volume control when supported, with DDC fallback for external display audio outputs
+    - Per-device 5-band EQ for output devices (per-app EQ overrides per-device EQ)
   - `APPS` section:
     - Per-app volume slider
     - Per-app mute toggle
