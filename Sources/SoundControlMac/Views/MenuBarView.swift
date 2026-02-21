@@ -203,8 +203,13 @@ private struct DeviceRowView: View {
     @State private var baselinePercent = 0
     @FocusState private var isPercentEditorFocused: Bool
     @State private var isEQExpanded = false
+    @State private var displayedVolume: Double = 0
+    @State private var isSliderEditing = false
+    @State private var pendingVolumeValue: Double?
+    @State private var pendingVolumeTask: Task<Void, Never>?
 
     private let percentFieldWidth: CGFloat = 38
+    private let sliderEventDelayNanos: UInt64 = 60_000_000
 
     var body: some View {
         VStack(spacing: 8) {
@@ -227,12 +232,13 @@ private struct DeviceRowView: View {
 
                 Slider(
                     value: Binding(
-                        get: { device.volume ?? 0 },
+                        get: { displayedVolume },
                         set: { newValue in
-                            onVolumeChange(newValue)
+                            handleSliderValueChanged(newValue)
                         }
                     ),
-                    in: 0...1
+                    in: 0...1,
+                    onEditingChanged: handleSliderEditingChanged
                 )
                 .disabled(device.volume == nil)
                 .frame(maxWidth: .infinity)
@@ -263,6 +269,16 @@ private struct DeviceRowView: View {
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(NSColor.controlBackgroundColor))
         )
+        .onAppear {
+            syncDisplayedVolume(from: device.volume)
+        }
+        .onChange(of: device.volume) { _, newVolume in
+            syncDisplayedVolume(from: newVolume)
+        }
+        .onDisappear {
+            flushPendingVolume()
+            commitPercentEditingIfNeededOnDisappear()
+        }
     }
 
     private var percentEditor: some View {
@@ -343,10 +359,10 @@ private struct DeviceRowView: View {
     }
 
     private var effectivePercent: Int {
-        guard let volume = device.volume else {
+        guard device.volume != nil else {
             return 0
         }
-        return Int((volume * 100).rounded())
+        return Int((displayedVolume * 100).rounded())
     }
 
     private func beginPercentEditing() {
@@ -376,7 +392,9 @@ private struct DeviceRowView: View {
         }
 
         let clamped = min(max(parsed, 0), 100)
-        onVolumeChange(Double(clamped) / 100)
+        let normalized = Double(clamped) / 100
+        displayedVolume = normalized
+        scheduleVolumeChange(normalized, immediate: true)
     }
 
     private func cancelPercentEditing() {
@@ -396,6 +414,80 @@ private struct DeviceRowView: View {
     private func eqGainText(_ gain: Float) -> String {
         let prefix = gain >= 0 ? "+" : ""
         return "\(prefix)\(gain.formatted(.number.precision(.fractionLength(1)))) dB"
+    }
+
+    private func handleSliderValueChanged(_ newValue: Double) {
+        guard device.volume != nil else {
+            return
+        }
+
+        let clamped = min(max(newValue, 0), 1)
+        displayedVolume = clamped
+        scheduleVolumeChange(clamped)
+    }
+
+    private func handleSliderEditingChanged(_ isEditing: Bool) {
+        isSliderEditing = isEditing
+        if !isEditing {
+            scheduleVolumeChange(displayedVolume, immediate: true)
+        }
+    }
+
+    private func scheduleVolumeChange(_ value: Double, immediate: Bool = false) {
+        guard device.volume != nil else {
+            return
+        }
+
+        let clamped = min(max(value, 0), 1)
+        pendingVolumeValue = clamped
+        pendingVolumeTask?.cancel()
+
+        if immediate {
+            flushPendingVolume()
+            return
+        }
+
+        pendingVolumeTask = Task {
+            try? await Task.sleep(nanoseconds: sliderEventDelayNanos)
+            guard !Task.isCancelled else {
+                return
+            }
+
+            await MainActor.run {
+                flushPendingVolume()
+            }
+        }
+    }
+
+    private func flushPendingVolume() {
+        pendingVolumeTask?.cancel()
+        pendingVolumeTask = nil
+
+        guard let pendingVolumeValue else {
+            return
+        }
+
+        self.pendingVolumeValue = nil
+        onVolumeChange(pendingVolumeValue)
+    }
+
+    private func syncDisplayedVolume(from sourceVolume: Double?) {
+        guard let sourceVolume else {
+            return
+        }
+
+        guard !isSliderEditing, !isEditingPercent else {
+            return
+        }
+
+        displayedVolume = min(max(sourceVolume, 0), 1)
+    }
+
+    private func commitPercentEditingIfNeededOnDisappear() {
+        guard isEditingPercent else {
+            return
+        }
+        commitPercentEditing()
     }
 }
 
