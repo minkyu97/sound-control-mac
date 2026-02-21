@@ -17,9 +17,11 @@ final class AudioDeviceManager {
         let block: AudioObjectPropertyListenerBlock
     }
 
+    private let ddcController: DDCControlling
     private var listenerTokens: [ListenerToken] = []
 
-    init() {
+    init(ddcController: DDCControlling = DDCController()) {
+        self.ddcController = ddcController
         registerSystemListeners()
         refreshDevices()
     }
@@ -72,11 +74,29 @@ final class AudioDeviceManager {
         guard let deviceID = audioDeviceID(forUID: uid) else { return }
 
         let scope = scope(for: kind)
-        let clamped = Float32(min(max(volume, 0), 1))
+        let clamped = min(max(volume, 0), 1)
+        let deviceName = stringProperty(objectID: deviceID, selector: kAudioObjectPropertyName)
 
-        if setVolumeScalar(deviceID: deviceID, scope: scope, value: clamped) {
+        if kind == .output,
+           let deviceName,
+           ddcController.isDDCBacked(deviceID: deviceID, outputDeviceName: deviceName),
+           ddcController.setVolume(clamped, for: deviceID, outputDeviceName: deviceName) {
             refreshDevices()
+            return
         }
+
+        if setVolumeScalar(deviceID: deviceID, scope: scope, value: Float32(clamped)) {
+            refreshDevices()
+            return
+        }
+
+        guard kind == .output,
+              let deviceName,
+              ddcController.setVolume(clamped, for: deviceID, outputDeviceName: deviceName) else {
+            return
+        }
+
+        refreshDevices()
     }
 
     private func registerSystemListeners() {
@@ -135,6 +155,7 @@ final class AudioDeviceManager {
         }
 
         let scope = scope(for: kind)
+        let volume = resolvedVolume(deviceID: deviceID, scope: scope, kind: kind, deviceName: name)
 
         return AudioDevice(
             deviceID: deviceID,
@@ -142,7 +163,7 @@ final class AudioDeviceManager {
             name: name,
             kind: kind,
             iconURL: iconURLProperty(objectID: deviceID),
-            volume: volumeScalar(deviceID: deviceID, scope: scope)
+            volume: volume
         )
     }
 
@@ -194,6 +215,31 @@ final class AudioDeviceManager {
         return Double(min(max(average, 0), 1))
     }
 
+    private func resolvedVolume(
+        deviceID: AudioDeviceID,
+        scope: AudioObjectPropertyScope,
+        kind: AudioDevice.Kind,
+        deviceName: String
+    ) -> Double? {
+        if kind == .output,
+           ddcController.isDDCBacked(deviceID: deviceID, outputDeviceName: deviceName),
+           let ddcVolume = ddcController.currentVolume(for: deviceID, outputDeviceName: deviceName) {
+            return ddcVolume
+        }
+
+        let coreAudioVolume = volumeScalar(deviceID: deviceID, scope: scope)
+        if canSetVolumeScalar(deviceID: deviceID, scope: scope), let coreAudioVolume {
+            return coreAudioVolume
+        }
+
+        if kind == .output,
+           let ddcVolume = ddcController.currentVolume(for: deviceID, outputDeviceName: deviceName) {
+            return ddcVolume
+        }
+
+        return nil
+    }
+
     private func volumeScalar(
         deviceID: AudioDeviceID,
         scope: AudioObjectPropertyScope,
@@ -241,6 +287,41 @@ final class AudioDeviceManager {
         element: AudioObjectPropertyElement,
         value: Float32
     ) -> Bool {
+        guard isVolumeScalarSettable(deviceID: deviceID, scope: scope, element: element) else {
+            return false
+        }
+
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyVolumeScalar,
+            mScope: scope,
+            mElement: element
+        )
+
+        let dataSize = UInt32(MemoryLayout<Float32>.size)
+        var writableValue = value
+        let status = AudioObjectSetPropertyData(deviceID, &address, 0, nil, dataSize, &writableValue)
+        return status == noErr
+    }
+
+    private func canSetVolumeScalar(deviceID: AudioDeviceID, scope: AudioObjectPropertyScope) -> Bool {
+        if isVolumeScalarSettable(deviceID: deviceID, scope: scope, element: kAudioObjectPropertyElementMain) {
+            return true
+        }
+
+        for element in channelElements(deviceID: deviceID, scope: scope) {
+            if isVolumeScalarSettable(deviceID: deviceID, scope: scope, element: element) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    private func isVolumeScalarSettable(
+        deviceID: AudioDeviceID,
+        scope: AudioObjectPropertyScope,
+        element: AudioObjectPropertyElement
+    ) -> Bool {
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioDevicePropertyVolumeScalar,
             mScope: scope,
@@ -252,15 +333,7 @@ final class AudioDeviceManager {
         }
 
         var settable = DarwinBoolean(false)
-        guard AudioObjectIsPropertySettable(deviceID, &address, &settable) == noErr,
-              settable.boolValue else {
-            return false
-        }
-
-        let dataSize = UInt32(MemoryLayout<Float32>.size)
-        var writableValue = value
-        let status = AudioObjectSetPropertyData(deviceID, &address, 0, nil, dataSize, &writableValue)
-        return status == noErr
+        return AudioObjectIsPropertySettable(deviceID, &address, &settable) == noErr && settable.boolValue
     }
 
     private func channelElements(deviceID: AudioDeviceID, scope: AudioObjectPropertyScope) -> [AudioObjectPropertyElement] {

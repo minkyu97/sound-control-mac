@@ -8,7 +8,7 @@ Menu bar macOS app for per-app audio control with persistent app profiles.
   - `GLOBAL` section:
     - Output/Input tabs
     - Per-device row controls (default-device radio, icon, name, slider, percentage)
-    - Per-device hardware volume control when supported
+    - Per-device hardware volume control when supported, with DDC fallback for external display audio outputs
   - `APPS` section:
     - Per-app volume slider
     - Per-app mute toggle
@@ -30,6 +30,7 @@ Menu bar macOS app for per-app audio control with persistent app profiles.
 
 - Core Audio tap flow requires macOS 14.2+.
 - Per-device hardware volume may be unavailable for some devices/scopes (shown as disabled with `N/A`).
+- DDC control depends on the display exposing speaker volume controls over DDC/CI.
 - Per-app input source routing is not implemented.
 - Tap-based routing reliability still depends on process/device behavior in HAL; additional hardening is still needed for production.
 

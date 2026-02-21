@@ -25,6 +25,8 @@
 		A1000000000000000000000F /* AppSessionRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000F /* AppSessionRowView.swift */; };
 		A10000000000000000000010 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* MenuBarView.swift */; };
 		A10000000000000000000011 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* SettingsView.swift */; };
+		A10000000000000000000012 /* DDCController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* DDCController.swift */; };
+		A10000000000000000000013 /* DDCService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* DDCService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,6 +50,8 @@
 		A20000000000000000000011 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000013 /* SoundControlMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SoundControlMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000014 /* DDCController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DDCController.swift; sourceTree = "<group>"; };
+		A20000000000000000000015 /* DDCService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DDCService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,12 +112,22 @@
 			children = (
 				A20000000000000000000007 /* AudioDeviceManager.swift */,
 				A20000000000000000000008 /* CoreAudioTapRoutingService.swift */,
+				A4000000000000000000000A /* DDC */,
 				A20000000000000000000009 /* RoutingService.swift */,
 				A2000000000000000000000A /* RoutingServiceFactory.swift */,
 				A2000000000000000000000B /* RunningAppMonitor.swift */,
 				A2000000000000000000000C /* StubRoutingService.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		A4000000000000000000000A /* DDC */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000014 /* DDCController.swift */,
+				A20000000000000000000015 /* DDCService.swift */,
+			);
+			path = DDC;
 			sourceTree = "<group>";
 		};
 		A40000000000000000000006 /* Stores */ = {
@@ -226,6 +240,8 @@
 				A10000000000000000000005 /* AudioDevice.swift in Sources */,
 				A10000000000000000000006 /* UserSettings.swift in Sources */,
 				A10000000000000000000007 /* AudioDeviceManager.swift in Sources */,
+				A10000000000000000000012 /* DDCController.swift in Sources */,
+				A10000000000000000000013 /* DDCService.swift in Sources */,
 				A10000000000000000000008 /* CoreAudioTapRoutingService.swift in Sources */,
 				95F7DE142F46A17C00374D5B /* AppEQSettings.swift in Sources */,
 				A10000000000000000000009 /* RoutingService.swift in Sources */,
