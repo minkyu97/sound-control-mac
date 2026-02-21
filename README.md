@@ -9,12 +9,12 @@ Menu bar macOS app for per-app audio control with persistent app profiles.
     - Output/Input tabs
     - Per-device row controls (default-device radio, icon, name, slider, typed percentage input)
     - Per-device hardware volume control when supported, with DDC fallback for external display audio outputs
-    - Per-device 5-band EQ for output devices (per-app EQ overrides per-device EQ)
+    - Per-device 10-band EQ for output devices (`32Hz` to `16kHz`, low-to-high left-to-right; per-app EQ overrides per-device EQ)
   - `APPS` section:
     - Per-app volume slider
     - Per-app mute toggle
     - Inline editable per-app percentage
-    - Expandable per-app 5-band EQ (`80Hz`, `250Hz`, `1k`, `4k`, `12k`)
+    - Expandable per-app 10-band EQ (`32Hz`, `64Hz`, `125Hz`, `250Hz`, `500Hz`, `1kHz`, `2kHz`, `4kHz`, `8kHz`, `16kHz`)
 - Global output/input default device selection through CoreAudio.
 - Profile persistence per bundle identifier with optional "remember" toggle.
 - Settings UI for enabling/disabling remembered app profiles.
@@ -23,7 +23,7 @@ Menu bar macOS app for per-app audio control with persistent app profiles.
   - Resolves PID to CoreAudio process objects
   - Creates per-app process taps (`AudioHardwareCreateProcessTap`)
   - Creates private aggregate devices and IOProc callbacks
-  - Applies per-app mute/volume and 5-band EQ DSP in the callback path
+  - Applies per-app mute/volume and 10-band EQ DSP in the callback path
   - Hard-clamps output samples to `[-1, 1]` to avoid clipping overflow
 - Fallback `StubRoutingService` when taps are unavailable.
 

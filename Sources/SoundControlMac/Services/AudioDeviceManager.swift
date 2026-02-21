@@ -3,6 +3,9 @@ import Foundation
 
 @MainActor
 final class AudioDeviceManager {
+    private static let managedAggregateUIDPrefix = "com.soundcontrol.mac.aggregate."
+    private static let managedAggregateNamePrefix = "Sound Control Aggregate"
+
     struct Snapshot {
         let outputDevices: [AudioDevice]
         let inputDevices: [AudioDevice]
@@ -33,6 +36,10 @@ final class AudioDeviceManager {
         var inputDevices: [AudioDevice] = []
 
         for deviceID in allIDs {
+            if shouldHideFromUI(deviceID: deviceID) {
+                continue
+            }
+
             if hasStream(deviceID: deviceID, scope: kAudioObjectPropertyScopeOutput),
                let device = makeDevice(deviceID: deviceID, kind: .output) {
                 outputDevices.append(device)
@@ -53,8 +60,8 @@ final class AudioDeviceManager {
         let snapshot = Snapshot(
             outputDevices: outputDevices,
             inputDevices: inputDevices,
-            defaultOutputUID: outputDevices.first(where: { $0.deviceID == defaultOutputID })?.uid,
-            defaultInputUID: inputDevices.first(where: { $0.deviceID == defaultInputID })?.uid
+            defaultOutputUID: outputDevices.first(where: { $0.deviceID == defaultOutputID })?.uid ?? outputDevices.first?.uid,
+            defaultInputUID: inputDevices.first(where: { $0.deviceID == defaultInputID })?.uid ?? inputDevices.first?.uid
         )
 
         onSnapshotChanged?(snapshot)
@@ -433,11 +440,29 @@ final class AudioDeviceManager {
 
     private func audioDeviceID(forUID uid: String) -> AudioDeviceID? {
         for deviceID in allAudioDeviceIDs() {
+            if shouldHideFromUI(deviceID: deviceID) {
+                continue
+            }
+
             if stringProperty(objectID: deviceID, selector: kAudioDevicePropertyDeviceUID) == uid {
                 return deviceID
             }
         }
         return nil
+    }
+
+    private func shouldHideFromUI(deviceID: AudioDeviceID) -> Bool {
+        if let uid = stringProperty(objectID: deviceID, selector: kAudioDevicePropertyDeviceUID),
+           uid.hasPrefix(Self.managedAggregateUIDPrefix) {
+            return true
+        }
+
+        if let name = stringProperty(objectID: deviceID, selector: kAudioObjectPropertyName),
+           name.lowercased().hasPrefix(Self.managedAggregateNamePrefix.lowercased()) {
+            return true
+        }
+
+        return false
     }
 
     private func setDefaultDevice(deviceID: AudioDeviceID, selector: AudioObjectPropertySelector) {

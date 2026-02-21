@@ -10,7 +10,7 @@ struct SoundControlMacApp: App {
         MenuBarExtra("Sound Control", systemImage: "slider.horizontal.3") {
             MenuBarView()
                 .environmentObject(appState)
-                .frame(minWidth: 420, minHeight: 520)
+                .frame(minWidth: 560, minHeight: 520)
         }
         .menuBarExtraStyle(.window)
 

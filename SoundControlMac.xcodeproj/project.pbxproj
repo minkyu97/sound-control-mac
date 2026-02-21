@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9568329B2F4A62FB0026F43B /* VerticalEQSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9568329A2F4A62FB0026F43B /* VerticalEQSlider.swift */; };
 		95F7DE142F46A17C00374D5B /* AppEQSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F7DE132F46A17C00374D5B /* AppEQSettings.swift */; };
 		A10000000000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* AppDelegate.swift */; };
 		A10000000000000000000002 /* SoundControlMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* SoundControlMacApp.swift */; };
@@ -30,6 +31,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		9568329A2F4A62FB0026F43B /* VerticalEQSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerticalEQSlider.swift; sourceTree = "<group>"; };
 		95F7DE132F46A17C00374D5B /* AppEQSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEQSettings.swift; sourceTree = "<group>"; };
 		A20000000000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* SoundControlMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundControlMacApp.swift; sourceTree = "<group>"; };
@@ -121,15 +123,6 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
-		A4000000000000000000000A /* DDC */ = {
-			isa = PBXGroup;
-			children = (
-				A20000000000000000000014 /* DDCController.swift */,
-				A20000000000000000000015 /* DDCService.swift */,
-			);
-			path = DDC;
-			sourceTree = "<group>";
-		};
 		A40000000000000000000006 /* Stores */ = {
 			isa = PBXGroup;
 			children = (
@@ -142,6 +135,7 @@
 		A40000000000000000000007 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				9568329A2F4A62FB0026F43B /* VerticalEQSlider.swift */,
 				A2000000000000000000000F /* AppSessionRowView.swift */,
 				A20000000000000000000010 /* MenuBarView.swift */,
 				A20000000000000000000011 /* SettingsView.swift */,
@@ -163,6 +157,15 @@
 				A20000000000000000000013 /* SoundControlMac.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A4000000000000000000000A /* DDC */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000014 /* DDCController.swift */,
+				A20000000000000000000015 /* DDCService.swift */,
+			);
+			path = DDC;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -242,6 +245,7 @@
 				A10000000000000000000007 /* AudioDeviceManager.swift in Sources */,
 				A10000000000000000000012 /* DDCController.swift in Sources */,
 				A10000000000000000000013 /* DDCService.swift in Sources */,
+				9568329B2F4A62FB0026F43B /* VerticalEQSlider.swift in Sources */,
 				A10000000000000000000008 /* CoreAudioTapRoutingService.swift in Sources */,
 				95F7DE142F46A17C00374D5B /* AppEQSettings.swift in Sources */,
 				A10000000000000000000009 /* RoutingService.swift in Sources */,

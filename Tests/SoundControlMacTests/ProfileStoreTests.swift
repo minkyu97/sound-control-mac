@@ -20,9 +20,10 @@ final class ProfileStoreTests: XCTestCase {
 
         let reloadedStore = ProfileStore(stateURL: stateURL)
         let loaded = reloadedStore.profile(for: "com.example.player")
+        let expectedGains = AppEQSettings(gainsDB: [2.5, -1.5, 0, 3.0, -2.0]).gainsDB
         XCTAssertEqual(loaded.volume, 0.25, accuracy: 0.0001)
         XCTAssertEqual(loaded.preferredOutputDeviceUID, "speaker-1")
-        XCTAssertEqual(loaded.eq.gainsDB, [2.5, -1.5, 0, 3.0, -2.0])
+        XCTAssertEqual(loaded.eq.gainsDB, expectedGains)
     }
 
     func testWhenRememberDisabledProfileStaysRuntimeOnly() throws {
@@ -76,6 +77,47 @@ final class ProfileStoreTests: XCTestCase {
         XCTAssertEqual(store.deviceEQ(forDeviceUID: "speaker-legacy"), .flat)
     }
 
+    func testLegacyStateWithArrayEQStillLoadsProfiles() throws {
+        let tempDirectory = try makeTempDirectory()
+        let stateURL = tempDirectory.appendingPathComponent("state.json")
+
+        let legacyState = """
+        {
+          "settings": {
+            "rememberPerAppSelection": true
+          },
+          "profiles": {
+            "com.example.player": {
+              "bundleIdentifier": "com.example.player",
+              "volume": 0.66,
+              "isMuted": false,
+              "preferredOutputDeviceUID": "speaker-legacy",
+              "eq": [2.0, -1.0, 0.5, -0.5, 3.0]
+            }
+          },
+          "deviceEQProfiles": {
+            "speaker-legacy": [1.0, 0.0, -2.0]
+          }
+        }
+        """
+
+        try legacyState.data(using: .utf8)?.write(to: stateURL)
+
+        let store = ProfileStore(stateURL: stateURL)
+        let loadedProfile = store.profile(for: "com.example.player")
+        let loadedDeviceEQ = store.deviceEQ(forDeviceUID: "speaker-legacy")
+
+        XCTAssertEqual(loadedProfile.volume, 0.66, accuracy: 0.0001)
+        XCTAssertEqual(
+            loadedProfile.eq.gainsDB,
+            AppEQSettings(gainsDB: [2.0, -1.0, 0.5, -0.5, 3.0]).gainsDB
+        )
+        XCTAssertEqual(
+            loadedDeviceEQ.gainsDB,
+            AppEQSettings(gainsDB: [1.0, 0.0, -2.0]).gainsDB
+        )
+    }
+
     func testDeviceEQPersistsAcrossStoreReload() throws {
         let tempDirectory = try makeTempDirectory()
         let stateURL = tempDirectory.appendingPathComponent("state.json")
@@ -85,7 +127,7 @@ final class ProfileStoreTests: XCTestCase {
         var eq = AppEQSettings.flat
         eq.setGain(at: 0, gainDB: 2.5)
         eq.setGain(at: 2, gainDB: -3.0)
-        eq.setGain(at: 4, gainDB: 4.5)
+        eq.setGain(at: 9, gainDB: 4.5)
         store.setDeviceEQ(eq, forDeviceUID: "display-speaker-1")
 
         let reloadedStore = ProfileStore(stateURL: stateURL)

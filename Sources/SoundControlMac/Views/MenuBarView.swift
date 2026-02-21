@@ -326,29 +326,44 @@ private struct DeviceRowView: View {
 
     private var eqPanel: some View {
         VStack(spacing: 6) {
-            ForEach(0..<AppEQSettings.bandCount, id: \.self) { index in
-                HStack(spacing: 8) {
-                    Text(AppEQSettings.bandLabels[index])
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 36, alignment: .leading)
+            GeometryReader { geometry in
+                let spacing: CGFloat = 4
+                let totalSpacing = spacing * CGFloat(max(0, AppEQSettings.bandCount - 1))
+                let bandWidth = max(30, (geometry.size.width - totalSpacing) / CGFloat(AppEQSettings.bandCount))
 
-                    Slider(
-                        value: Binding(
-                            get: { Double(eqSettings.gain(at: index)) },
-                            set: { newValue in
-                                onEQBandChange(index, Float(newValue))
-                            }
-                        ),
-                        in: Double(AppEQSettings.minGainDB)...Double(AppEQSettings.maxGainDB)
-                    )
+                HStack(alignment: .top, spacing: spacing) {
+                    ForEach(0..<AppEQSettings.bandCount, id: \.self) { index in
+                        VStack(spacing: 4) {
+                            Text(AppEQSettings.bandLabels[index])
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
 
-                    Text(eqGainText(eqSettings.gain(at: index)))
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 54, alignment: .trailing)
+                            VerticalEQSlider(
+                                value: Binding(
+                                    get: { Double(eqSettings.gain(at: index)) },
+                                    set: { newValue in
+                                        onEQBandChange(index, Float(newValue))
+                                    }
+                                ),
+                                range: Double(AppEQSettings.minGainDB)...Double(AppEQSettings.maxGainDB)
+                            )
+                            .frame(width: min(CGFloat(22), bandWidth), height: 86)
+
+                            Text(eqGainText(eqSettings.gain(at: index)))
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                        .frame(width: bandWidth, alignment: .top)
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
+            .frame(height: 118)
 
             Text("Per-app EQ settings override this device EQ.")
                 .font(.system(size: 10))
@@ -413,7 +428,7 @@ private struct DeviceRowView: View {
 
     private func eqGainText(_ gain: Float) -> String {
         let prefix = gain >= 0 ? "+" : ""
-        return "\(prefix)\(gain.formatted(.number.precision(.fractionLength(1)))) dB"
+        return "\(prefix)\(gain.formatted(.number.precision(.fractionLength(1))))"
     }
 
     private func handleSliderValueChanged(_ newValue: Double) {
